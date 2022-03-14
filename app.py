@@ -51,10 +51,10 @@ def render_login():
     return render_template("login.html")
 
 
-# @app.route('/menu')
-# def render_homepage():
-#     return render_template("menu.html")
-#
+@app.route('/signup')
+def render_signup_page():
+    return render_template("signup.html")
+
 # @app.route('/contact')
 # def render_homepage():
 #     return render_template("contact.html")
