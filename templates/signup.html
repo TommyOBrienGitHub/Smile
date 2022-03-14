@@ -5,30 +5,30 @@ sign up
 {% endblock %}
 
 {% block main %}
-<form class="myform">
+<form class="myform" method="post">
     <div class="form-group">
         <div class="form-label">First name:</div>
-        <div class="form-label"><input type="text" required></div>
+        <div class="form-label"><input id="fname" name="fname" type="text" required></div>
     </div>
 
     <div class="form-group">
         <div class="form-label">Last name:</div>
-        <div class="form-label"><input type="text" required></div>
+        <div class="form-label"><input id="lname" name="lname" type="text" required></div>
     </div>
 
     <div class="form-group">
         <div class="form-label">Email:</div>
-        <div class="form-label"><input type="email" required></div>
+        <div class="form-label"><input id="email" name="email" type="email" required></div>
     </div>
 
     <div class="form-group">
         <div class="form-label">Password:</div>
-        <div class="form-label"><input type="text" required></div>
+        <div class="form-label"><input id="password" name="password" type="password" required></div>
     </div>
 
     <div class="form-group">
         <div class="form-label">Password (again):</div>
-        <div class="form-label"><input type="text" required></div>
+        <div class="form-label"><input id="password2" name="password2" type="password" required></div>
     </div>
 
     <div class="button-group">
