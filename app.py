@@ -53,21 +53,33 @@ def render_login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def render_signup_page():
-    print(request.form)
-    fname = request.form.get('fname')
-    lname = request.form.get('lname')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    password2 = request.form.get('password2')
+    if request.method == 'POST':
+        print(request.form)
+        fname = request.form.get('fname').strip().title()
+        lname = request.form.get('lname').strip().title()
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+        password2 = request.form.get('password2')
 
-    con = create_connection(DB_NAME)
+        if password != password2:
+            return redirect('/signup?error=Passwords+dont+match')
 
-    query = "INSERT INTO customer(id, fname, lname, email, password) VALUES(NULL,?,?,?,?)"
+        if len(password) < 8:
+            return redirect('/signup?error=Password+must+be+8+characters+or+more')
 
-    cur = con.cursor()
-    cur.execute(query, (fname, lname, email, password))
-    con.commit()
-    con.close()
+        con = create_connection(DB_NAME)
+
+        query = "INSERT INTO customer(id, fname, lname, email, password) VALUES(NULL,?,?,?,?)"
+
+        cur = con.cursor()
+        try:
+            cur.execute(query, (fname, lname, email, password))
+        except sqlite3.IntegrityError:
+            return redirect('/signup?error=Email+is+already+taken')
+
+
+        con.commit()
+        con.close()
     return render_template("signup.html")
 
 
