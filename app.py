@@ -5,6 +5,7 @@ from sqlite3 import Error
 DB_NAME = "smile.db"
 
 app = Flask(__name__)
+app.secret_key = "secret_key"
 
 
 # creates a connection to the database
@@ -23,7 +24,7 @@ def create_connection(db_file):
 
 @app.route('/')
 def render_homepage():
-    return render_template("home.html")
+    return render_template("home.html", logged_in=is_logged_in())
 
 
 @app.route('/menu')
@@ -38,21 +39,53 @@ def render_menu_page():
     product_list = cur.fetchall()
     con.close()
 
-    return render_template("menu.html", products=product_list)
+    return render_template("menu.html", products=product_list, logged_in=is_logged_in())
 
 
 @app.route('/contact')
 def render_contact():
-    return render_template("contact.html")
+    return render_template("contact.html", logged_in=is_logged_in())
 
 
-@app.route('/login')
-def render_login():
-    return render_template("login.html")
+@app.route('/login', methods=['GET', 'POST'])
+def render_login_page():
+    if is_logged_in():
+        return redirect('/')
+
+    if request.method == 'POST':
+        email = request.form['email'].strip().lower()
+        password = request.form['password'].strip()
+
+        query = """SELECT id, fname, password FROM customers WHERE email = ?"""
+        con = create_connection(DB_NAME)
+        cur = con.cursor()
+        cur.execute(query, (email,))
+        user_data = cur.fetchall()
+        con.close()
+
+        try:
+            userid = user_data[0][0]
+            firstname = user_data[0][1]
+            db_password = user_data[0][2]
+        except IndexError:
+            return redirect("/login?error=Email+invalid+or+password+incorrect")
+
+        if db_password != password:
+            return redirect("/login?error=Email+invalid+or+password+incorrect")
+
+        session['email'] = email
+        session['userid'] = userid
+        session['firstname'] = firstname
+        print(session)
+        return redirect('/')
+    return render_template("login.html", logged_in=is_logged_in())
 
 
 @app.route('/signup', methods=['GET', 'POST'])
 def render_signup_page():
+    if is_logged_in():
+        return redirect('/')
+
     if request.method == 'POST':
         print(request.form)
         fname = request.form.get('fname').strip().title()
@@ -77,11 +110,29 @@ def render_signup_page():
         except sqlite3.IntegrityError:
             return redirect('/signup?error=Email+is+already+taken')
 
-
         con.commit()
         con.close()
-    return render_template("signup.html")
+        return redirect('/login')
+    return render_template("signup.html", logged_in=is_logged_in())
 
 
+@app.route('/signup', methods=['GET', 'POST'])
 
-app.run(host="0.0.0.0")
+
+def is_logged_in():
+    if session.get('email') is None:
+        print('Not logged in')
+        return False
+    print('Logged in')
+    return True
+
+
+@app.route('/logout')
+def logout():
+    print(list(session.keys()))
+    [session.pop(key) for key in list(session.keys())]
+    print(list(session.keys()))
+    return redirect(request.referrer + '?message=See+you+next+time!')
+
+
+app.run(host="0.0.0.0", debug=True)
