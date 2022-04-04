@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session, redirect
 import sqlite3
 from sqlite3 import Error
 from flask_bcrypt import Bcrypt
+from datetime import datetime
 
 DB_NAME = "smile.db"
 
@@ -119,7 +120,25 @@ def render_signup_page():
     return render_template("signup.html", logged_in=is_logged_in())
 
 
-@app.route('/signup', methods=['GET', 'POST'])
+@app.route('/addtocart/<productid>')
+def addtocart(productid):
+    try:
+        productid = int(productid)
+    except ValueError:
+        print("{} is not an integer".format(productid))
+        return redirect("/menu?error=Invalid+product+id")
+
+    userid = session['userid']
+    timestamp = datetime.now()
+    print("User {} would like to add {} to cart at {}".format(userid, productid, timestamp))
+
+    query = "INSERT INTO cart(id,userid,productid,timestamp) Values (NULL,?,?,?)"
+    con = create_connection(DB_NAME)
+    cur = con.cursor()
+    cur.execute(query, (userid, productid, timestamp))
+    con.commit()
+    con.close()
+    return redirect(request.referrer)
 
 
 def is_logged_in():
@@ -136,6 +155,17 @@ def logout():
     [session.pop(key) for key in list(session.keys())]
     print(list(session.keys()))
     return redirect(request.referrer + '?message=See+you+next+time!')
+
+def create_connection(db_file):
+   """create a connection to the sqlite db"""
+   try:
+       connection = sqlite3.connect(db_file)
+       connection.execute('pragma foreign_keys=ON')
+       return connection
+   except Error as e:
+       print(e)
+
+   return None
 
 
 app.run(host="0.0.0.0", debug=True)
